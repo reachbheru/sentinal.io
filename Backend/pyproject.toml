@@ -1,26 +1,22 @@
-[project]
-name = "sential-io"
+[tool.poetry]
+name = "backend-app"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "reach bheru",email = "reachbheru@gmail.com"}
-]
-readme = "backend/README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "fastapi (>=0.116.1,<0.117.0)",
-    "uvicorn[standard] (>=0.35.0,<0.36.0)",
-    "pydantic (>=2.11.7,<3.0.0)",
-    "gunicorn (>=23.0.0,<24.0.0)",
-    "rich (>=14.1.0,<15.0.0)"
-]
+authors = ["reach bheru <reachbheru@gmail.com>"]
+package-mode = false
 
-[tool.poetry]
-packages = [{include = "sential"}]
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+fastapi = "^0.116.1"
+uvicorn = {extras = ["standard"], version = "^0.35.0"}
+pydantic = "^2.11.7"
+gunicorn = "^23.0.0"
+rich = "^14.1.0"
+
 
 [tool.poetry.scripts]
-dev = "Backend.main:dev"
-start = "Backend.main:start"
+dev = "main:dev"
+start = "main:start"
 
 
 [build-system]
