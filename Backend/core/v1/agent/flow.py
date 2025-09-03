@@ -5,7 +5,7 @@ from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
-from .schema.state import State, InstagramURLAnalysis, TwitterURLAnalysis   
+from Backend.core.v1.agent.schema.state import State, InstagramURLAnalysis, TwitterURLAnalysis    
 from Backend.api.v1.dependencies.service_deps import get_gemini
 from Backend.core.v1.agent.weboperations import serp_search, instagram_post_search, twitter_search_by_keyword
 from Backend.core.v1.agent.prompts import (
@@ -251,3 +251,10 @@ Tweet {i}:
 
         print("-" * 80)
         return None
+    
+
+if __name__ == "__main__":
+    load_dotenv(".env")
+    news_verification_flow = NewsVerificationFlow()
+    user_query = "Narendra Modi"
+    news_verification_flow.run_news_verification(user_query)
