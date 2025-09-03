@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 env_path = (
     Path(".env.prod")
     if os.getenv("ENVIRONMENT") == "production"
-    else Path(".env.local")
+    else Path(".env")
 )
 if env_path.exists():
     load_dotenv(env_path)
@@ -18,9 +18,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from Backend.api import APIConfig
 from Backend.api.v1.middlewares.error_handler import ErrorHandlerMiddleware
-from Backend.api.v1.routes import (
+# from Backend.api.v1.routes import (
 
-)
+# )
 from Backend.core.v1.common.logger import get_logger
 
 logger = get_logger(__name__)
