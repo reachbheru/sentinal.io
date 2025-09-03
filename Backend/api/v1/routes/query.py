@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from Backend.api.v1.schemas.query.request import UserQuery
-from Backend.api.v1.dependencies.service_deps import get_news_verification_flow, get_structured_output
+from Backend.api.v1.dependencies.service_deps import get_news_verification_flow
 
 
 # Initialize router
