@@ -61,3 +61,11 @@ class IngestionError(BaseException):
     def __init__(self, detail: Optional[str] = None):
         self.message = "Error in ingestion"
         super().__init__(self.message, detail)
+
+
+class LlmException(BaseException):
+    """Exception raised for errors in LLM operations"""
+
+    def __init__(self, detail: Optional[str] = None):
+        self.message = "Error in LLM operation"
+        super().__init__(self.message, detail)
