@@ -2,7 +2,7 @@ from langchain.chat_models import init_chat_model
 import os
 from dotenv import load_dotenv
 
-class LlmClient:
+class LLMClient:
     """
     A client class for managing different LLM models.
     This class provides a unified interface to access various language models.
@@ -10,10 +10,10 @@ class LlmClient:
     
     def __init__(self):
         """Initialize the LLM client and load environment variables."""
-        load_dotenv()
+        load_dotenv(".env")
         self._models = {}
     
-    def gemini(self, model_name="gemini-2.0-flash-exp"):
+    def gemini(self, model_name="gemini-2.5-pro"):
         """
         Initialize and return a Gemini model instance.
         
@@ -119,13 +119,3 @@ class LlmClient:
     def clear_cache(self):
         """Clear all cached models."""
         self._models.clear()
-
-def initialize_gemini_model():
-    """
-    Legacy function for initializing Gemini model.
-    
-    Returns:
-        ChatModel: Initialized Gemini model instance
-    """
-    client = LlmClient()
-    return client.gemini()
