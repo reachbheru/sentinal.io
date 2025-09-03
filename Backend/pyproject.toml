@@ -10,11 +10,17 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi (>=0.116.1,<0.117.0)",
     "uvicorn[standard] (>=0.35.0,<0.36.0)",
-    "pydantic (>=2.11.7,<3.0.0)"
+    "pydantic (>=2.11.7,<3.0.0)",
+    "gunicorn (>=23.0.0,<24.0.0)",
+    "rich (>=14.1.0,<15.0.0)"
 ]
 
 [tool.poetry]
 packages = [{include = "sential"}]
+
+[tool.poetry.scripts]
+dev = "Backend.main:dev"
+start = "Backend.main:start"
 
 
 [build-system]

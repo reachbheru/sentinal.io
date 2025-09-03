@@ -16,12 +16,12 @@ if env_path.exists():
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import APIConfig
-from app.api.v1.middleware.error_handler import ErrorHandlerMiddleware
-from app.api.v1.routes import (
-    # all routes
+from Backend.api import APIConfig
+from Backend.api.v1.middlewares.error_handler import ErrorHandlerMiddleware
+from Backend.api.v1.routes import (
+
 )
-from app.core.v1.common.logger import get_logger
+from Backend.core.v1.common.logger import get_logger
 
 logger = get_logger(__name__)
 logger.info(f"Loading environment variables from {env_path}")
@@ -108,31 +108,31 @@ def dev():
     )
 
 
-def start():
-    """Run the app in production mode"""
-    import gunicorn.app.base
+# def start():
+#     """Run the app in production mode"""
+#     import gunicorn.app.base
 
-    class StandaloneApplication(gunicorn.app.base.BaseApplication):
-        def __init__(self, app, options=None):
-            self.options = options or {}
-            self.application = app
-            super().__init__()
+#     class StandaloneApplication(gunicorn.app.base.BaseApplication):
+#         def __init__(self, app, options=None):
+#             self.options = options or {}
+#             self.application = app
+#             super().__init__()
 
-        def load_config(self):
-            for key, value in self.options.items():
-                self.cfg.set(key, value)
+#         def load_config(self):
+#             for key, value in self.options.items():
+#                 self.cfg.set(key, value)
 
-        def load(self):
-            return self.application
+#         def load(self):
+#             return self.application
 
-    options = {
-        "bind": f"0.0.0.0:{os.getenv('PORT', '8080')}",
-        "workers": int(os.getenv("WORKERS", "4")),
-        "worker_class": "uvicorn.workers.UvicornWorker",
-        "loglevel": os.getenv("LOG_LEVEL", "debug").lower(),
-        "timeout": int(os.getenv("WORKER_TIMEOUT", "600")),
-    }
-    StandaloneApplication(app, options).run()
+#     options = {
+#         "bind": f"0.0.0.0:{os.getenv('PORT', '8080')}",
+#         "workers": int(os.getenv("WORKERS", "4")),
+#         "worker_class": "uvicorn.workers.UvicornWorker",
+#         "loglevel": os.getenv("LOG_LEVEL", "debug").lower(),
+#         "timeout": int(os.getenv("WORKER_TIMEOUT", "600")),
+#     }
+#     StandaloneApplication(app, options).run()
 
 
 if __name__ == "__main__":
