@@ -10,7 +10,7 @@ class LLMClient:
     
     def __init__(self):
         """Initialize the LLM client and load environment variables."""
-        load_dotenv()
+        load_dotenv(".env")
         self._models = {}
     
     def gemini(self, model_name="gemini-2.5-flash"):
