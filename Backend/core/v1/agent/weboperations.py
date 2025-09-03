@@ -97,12 +97,11 @@ def instagram_post_search(hashtag, num_of_posts=50):
     for post in raw_data:
         parsed_post = {
             "id": post.get("id"),
-            "caption": post.get("caption"),
-            "image_url": post.get("image_url"),
-            "post_url": post.get("post_url"),
-            "timestamp": post.get("timestamp"),
-            "likes": post.get("likes"),
-            "comments": post.get("comments")
+            "caption": post.get("description"),
+            "image_url": post.get("photos"),
+            "post_url": post.get("url"),
+            "timestamp": post.get("date_posted"),
+            "likes": post.get("likes")
         }
         parsed_data.append(parsed_post)
 

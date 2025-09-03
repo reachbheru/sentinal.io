@@ -4,7 +4,7 @@ from Backend.config.v1.constants.general import enhancement_suffix
 
 
 class QueryService:
-    def __init__(self, user_query: UserQuery, llm):
+    def __init__(self, user_query: UserQuery):
         self.user_query = user_query
 
     async def enhance_query(self):
