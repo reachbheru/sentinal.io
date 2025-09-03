@@ -76,6 +76,10 @@ class NewsVerificationFlow:
         
         formatted_posts = []
         for i, post in enumerate(instagram_data.get("parsed_posts", [])[:10], 1):  # Limit to 10 posts
+            # Skip None or empty posts
+            if not post or not isinstance(post, dict):
+                continue
+                
             post_info = f"""
 Post {i}:
 - ID: {post.get('id', 'N/A')}
@@ -96,6 +100,10 @@ Post {i}:
         
         formatted_posts = []
         for i, post in enumerate(twitter_data.get("parsed_posts", [])[:10], 1):  # Limit to 10 posts
+            # Skip None or empty posts
+            if not post or not isinstance(post, dict):
+                continue
+                
             post_info = f"""
 Tweet {i}:
 - ID: {post.get('id', 'N/A')}
@@ -256,5 +264,5 @@ Tweet {i}:
 if __name__ == "__main__":
     load_dotenv(".env")
     news_verification_flow = NewsVerificationFlow()
-    user_query = "Narendra Modi"
+    user_query = "Salman Khan"
     news_verification_flow.run_news_verification(user_query)

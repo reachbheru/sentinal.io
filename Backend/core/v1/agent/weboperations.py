@@ -3,27 +3,114 @@ import os
 import requests
 from urllib.parse import quote_plus
 from .snapshot import poll_snapshot_status, download_snapshot
+from apify_client import ApifyClient
+
+# Load environment variables
+load_dotenv()
+
+# Initialize Apify client
+APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN")
+client = ApifyClient(APIFY_API_TOKEN)
+
+def clean_input_for_search(input_text):
+    """
+    Clean input text by removing spaces and special characters for hashtag searches.
+    """
+    if not input_text:
+        return ""
+    
+    # Remove all spaces and special characters that might cause issues
+    cleaned = input_text.replace(" ", "").replace("#", "").replace("!", "").replace("?", "").replace(".", "").replace(",", "").replace(":", "").replace(";", "").replace("-", "").replace("+", "").replace("=", "").replace("*", "").replace("&", "").replace("%", "").replace("$", "").replace("@", "").replace("/", "").replace("~", "").replace("^", "").replace("|", "").replace("<", "").replace(">", "").replace("(", "").replace(")", "").replace("[", "").replace("]", "").replace("{", "").replace("}", "").replace("\"", "").replace("'", "").replace("`", "")
+    
+    return cleaned
+
+def clean_keyword_for_search(input_text):
+    """
+    Clean input text for keyword searches (keeps spaces but removes special characters).
+    """
+    if not input_text:
+        return ""
+    
+    # Remove special characters but keep spaces for search terms
+    cleaned = input_text.replace("#", "").replace("!", "").replace("?", "").replace(".", "").replace(",", "").replace(":", "").replace(";", "").replace("+", "").replace("=", "").replace("*", "").replace("&", "").replace("%", "").replace("$", "").replace("@", "").replace("/", "").replace("~", "").replace("^", "").replace("|", "").replace("<", "").replace(">", "").replace("(", "").replace(")", "").replace("[", "").replace("]", "").replace("{", "").replace("}", "").replace("\"", "").replace("'", "").replace("`", "")
+    
+    return cleaned.strip()
+
+# Debug environment setup for BrightData (still used for SERP)
+print("=" * 80)
+print("DEBUG: Environment Check")
+print("=" * 80)
+api_key = os.getenv("BRIGHTDATA_API_KEY")
+print(f"BRIGHTDATA_API_KEY found: {'Yes' if api_key else 'No'}")
+apify_key = os.getenv("APIFY_API_TOKEN")
+print(f"APIFY_API_TOKEN found: {'Yes' if apify_key else 'No'}")
+if api_key:
+    print(f"BrightData API Key length: {len(api_key)}")
+    print(f"BrightData API Key (first 10 chars): {api_key[:10]}...")
+    print(f"BrightData API Key (last 5 chars): ...{api_key[-5:]}")
+else:
+    print("WARNING: BRIGHTDATA_API_KEY not found in environment! (Still needed for SERP)")
+if apify_key:
+    print(f"Apify API Key length: {len(apify_key)}")
+    print(f"Apify API Key (first 10 chars): {apify_key[:10]}...")
+    print(f"Apify API Key (last 5 chars): ...{apify_key[-5:]}")
+else:
+    print("ERROR: APIFY_API_TOKEN not found in environment!")
+print("=" * 80)
 
 def _make_api_request(url, **kwargs):
     api_key = os.getenv("BRIGHTDATA_API_KEY")
+    
+    print("=" * 80)
+    print("DEBUG: Making API Request")
+    print("=" * 80)
+    print(f"URL: {url}")
+    print(f"API Key (first 10 chars): {api_key[:10] if api_key else 'None'}...")
+    print(f"Request kwargs: {kwargs}")
 
     headers = {
         "Authorization" : f"Bearer {api_key}",
         "Content-Type" : "application/json",
     }
+    
+    print(f"Headers: {headers}")
 
     try:
+        print("Sending POST request...")
         response = requests.post(url, headers=headers, **kwargs)
+        
+        print(f"Response Status Code: {response.status_code}")
+        print(f"Response Headers: {dict(response.headers)}")
+        print(f"Response URL: {response.url}")
+        
+        if response.status_code != 200:
+            print(f"ERROR Response Content: {response.text}")
+            print(f"ERROR Response Reason: {response.reason}")
+        
         response.raise_for_status()
-        return response.json()
+        response_json = response.json()
+        print(f"SUCCESS Response JSON (first 500 chars): {str(response_json)[:500]}...")
+        return response_json
+        
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP Error: {e}")
+        print(f"Status Code: {e.response.status_code if e.response else 'Unknown'}")
+        print(f"Response Text: {e.response.text if e.response else 'No response text'}")
+        return None
     except requests.exceptions.RequestException as e:
-        print(f"API request failed: {e}")
+        print(f"Request Error: {e}")
         return None
     except Exception as e:
         print(f"Unknown error: {e}")
         return None
     
 def serp_search(query, engine="google"):
+    print("=" * 80)
+    print(f"DEBUG: SERP Search Starting")
+    print("=" * 80)
+    print(f"Query: {query}")
+    print(f"Engine: {engine}")
+    
     if engine == "google":
         base_url = "https://www.google.com/search"
     else:
@@ -37,9 +124,14 @@ def serp_search(query, engine="google"):
         "format": "raw"
     }
 
+    print(f"SERP API URL: {url}")
+    print(f"SERP Payload: {payload}")
+    print(f"Target URL being scraped: {payload['url']}")
+
     full_response = _make_api_request(url, json=payload)
 
     if not full_response:
+        print("ERROR: No response from SERP search")
         return None
     
 
@@ -51,112 +143,307 @@ def serp_search(query, engine="google"):
     return extracted_data
 
 
-def _trigger_and_download_snapshot(trigger_url, params, data, operation_name="operation"):
-    trigger_result = _make_api_request(trigger_url, params=params, json=data)
-    if not trigger_result:
-        return None
-    
-    snapshot_id = trigger_result.get("snapshot_id")
-    if not snapshot_id:
-        return None
-    
-    if not poll_snapshot_status(snapshot_id):
-        return None
-    
-    raw_data = download_snapshot(snapshot_id)
-    return raw_data
+def normalize_instagram_post(post: dict) -> dict:
+    """Convert Apify Instagram post into structured JSON for LLM."""
+    try:
+        # Safe image processing
+        images = post.get("images", [])
+        media_urls = []
+        if isinstance(images, list):
+            media_urls = [m.get("url") for m in images if isinstance(m, dict) and m.get("url")]
+        
+        return {
+            "platform": "Instagram",
+            "text": post.get("caption", ""),
+            "url": post.get("url", ""),
+            "timestamp": post.get("timestamp", ""),
+            "user": post.get("ownerUsername", ""),
+            "verified": post.get("ownerIsVerified", False),
+            "followers": post.get("ownerProfilePage", ""),  # follower count not always available
+            "likes": post.get("likesCount", 0),
+            "comments": post.get("commentsCount", 0),
+            "entities": post.get("hashtags", []),
+            "media_urls": media_urls,
+            "media_verification_status": "unknown",  # placeholder → you can plug reverse-image check
+            "pre_flags": []
+        }
+    except Exception as e:
+        print(f"Error normalizing Instagram post: {e}")
+        print(f"Post data: {post}")
+        return {
+            "platform": "Instagram",
+            "text": "",
+            "url": "",
+            "timestamp": "",
+            "user": "",
+            "verified": False,
+            "followers": "",
+            "likes": 0,
+            "comments": 0,
+            "entities": [],
+            "media_urls": [],
+            "media_verification_status": "unknown",
+            "pre_flags": []
+        }
+
+
+def normalize_twitter_post(post: dict) -> dict:
+    """Convert Apify Twitter/X post into structured JSON for LLM."""
+    try:
+        # Safe entity processing
+        hashtags = []
+        entities = post.get("entities", {})
+        if isinstance(entities, dict) and "hashtags" in entities:
+            hashtags = [h.get("text", "") for h in entities["hashtags"] if isinstance(h, dict)]
+        
+        # Safe media processing
+        media_urls = []
+        extended_entities = post.get("extended_entities", {})
+        if isinstance(extended_entities, dict) and "media" in extended_entities:
+            media_urls = [m.get("media_url_https", "") for m in extended_entities["media"] if isinstance(m, dict)]
+        
+        # Safe user processing
+        user = post.get("user", {})
+        if not isinstance(user, dict):
+            user = {}
+        
+        return {
+            "platform": "Twitter",
+            "text": post.get("full_text", "") or post.get("text", ""),
+            "url": post.get("url", ""),
+            "timestamp": post.get("created_at", ""),
+            "user": user.get("screen_name", ""),
+            "verified": user.get("verified", False),
+            "followers": user.get("followers_count", 0),
+            "likes": post.get("favorite_count", 0),
+            "replies": post.get("reply_count", 0),
+            "retweets": post.get("retweet_count", 0),
+            "views": post.get("view_count", 0),
+            "entities": hashtags,
+            "media_urls": media_urls,
+            "media_verification_status": "unknown",
+            "pre_flags": []
+        }
+    except Exception as e:
+        print(f"Error normalizing Twitter post: {e}")
+        print(f"Post data: {post}")
+        return {
+            "platform": "Twitter",
+            "text": "",
+            "url": "",
+            "timestamp": "",
+            "user": "",
+            "verified": False,
+            "followers": 0,
+            "likes": 0,
+            "replies": 0,
+            "retweets": 0,
+            "views": 0,
+            "entities": [],
+            "media_urls": [],
+            "media_verification_status": "unknown",
+            "pre_flags": []
+        }
+
 
 def instagram_post_search(hashtag, num_of_posts=50):
     """
-    Search Instagram posts by hashtag using Bright Data dataset API.
+    Search Instagram posts by hashtag using Apify.
     """
-    trigger_url = "https://api.brightdata.com/datasets/v3/trigger"
-
-    params = {
-        "dataset_id": "gd_lk5ns7kz21pck8jpis",  
-        "include_errors": "true",
-        "type": "discover_new",
-        "discover_by": "hashtag"
-    }
-
-    data = [
-        {
-            "hashtag": hashtag,
-            "num_of_posts": num_of_posts
+    print("=" * 80)
+    print(f"DEBUG: Instagram Search Starting (Apify)")
+    print("=" * 80)
+    print(f"Original Hashtag: {hashtag}")
+    
+    # Clean hashtag using helper function
+    clean_hashtag = clean_input_for_search(hashtag)
+    
+    print(f"Cleaned Hashtag: {clean_hashtag}")
+    print(f"Number of posts requested: {num_of_posts}")
+    
+    try:
+        run_input = {
+            "hashtags": [clean_hashtag],
+            "resultsLimit": num_of_posts,
+            "searchType": "hashtags",
         }
-    ]
+        
+        print(f"Apify Instagram run input: {run_input}")
+        
+        run = client.actor("apify/instagram-hashtag-scraper").call(run_input=run_input)
+        items = list(client.dataset(run["defaultDatasetId"]).iterate_items()) #type: ignore
 
-    raw_data = _trigger_and_download_snapshot(
-        trigger_url, params, data, operation_name="instagram posts"
-    )
-
-    if not raw_data:
+        print(f"Retrieved {len(items)} items from Instagram")
+        
+        # Debug: Print first item to see structure
+        if items:
+            print(f"DEBUG: First item type: {type(items[0])}")
+            print(f"DEBUG: First item content (first 500 chars): {str(items[0])[:500]}")
+        
+        # Filter out non-dict items and normalize
+        valid_items = [item for item in items if isinstance(item, dict)]
+        print(f"Valid dict items: {len(valid_items)}")
+        
+        normalized_posts = [normalize_instagram_post(item) for item in valid_items]
+        
+        # Convert to the expected format for compatibility with existing code
+        parsed_data = []
+        for post in normalized_posts:
+            # Safe URL parsing
+            url = post.get("url", "")
+            post_id = None
+            if url:
+                url_parts = url.split("/")
+                if len(url_parts) >= 2:
+                    post_id = url_parts[-2]
+            
+            # Safe media URL extraction
+            media_urls = post.get("media_urls", [])
+            first_media = media_urls[0] if media_urls and len(media_urls) > 0 else None
+            
+            parsed_post = {
+                "id": post_id,
+                "caption": post.get("text", ""),
+                "image_url": first_media,
+                "post_url": url,
+                "timestamp": post.get("timestamp", ""),
+                "likes": post.get("likes", 0),
+                "comments": post.get("comments", 0)
+            }
+            parsed_data.append(parsed_post)
+        
+        return {"parsed_posts": parsed_data, "total_found": len(parsed_data)}
+        
+    except Exception as e:
+        print(f"ERROR: Instagram search failed: {e}")
         return None
-
-    parsed_data = []
-    for post in raw_data:
-        parsed_post = {
-            "id": post.get("id"),
-            "caption": post.get("caption"),
-            "image_url": post.get("image_url"),
-            "post_url": post.get("post_url"),
-            "timestamp": post.get("timestamp"),
-            "likes": post.get("likes"),
-            "comments": post.get("comments")
-        }
-        parsed_data.append(parsed_post)
-
-    return {"parsed_posts": parsed_data, "total_found": len(parsed_data)}
 
 def twitter_search_by_keyword(keyword, num_of_posts=50, sort_by="latest"):
     """
-    Search Twitter posts mentioning a keyword using Bright Data Datasets API.
+    Search Twitter posts mentioning a keyword using Apify.
     
     Args:
         keyword (str): The keyword or phrase to search for (e.g. VIP name).
         num_of_posts (int): Number of posts to fetch.
         sort_by (str): Sorting criteria, e.g. "latest", "popular" (depends on dataset support).
     """
-    trigger_url = "https://api.brightdata.com/datasets/v3/trigger"
+    print("=" * 80)
+    print(f"DEBUG: Twitter Search Starting (Apify)")
+    print("=" * 80)
+    print(f"Original Keyword: {keyword}")
+    
+    # Clean keyword using helper function
+    clean_keyword = clean_keyword_for_search(keyword)
+    
+    print(f"Cleaned Keyword: {clean_keyword}")
+    print(f"Number of posts requested: {num_of_posts}")
+    print(f"Sort by: {sort_by}")
+    
+    try:
+        scrapers_to_try = [
+            ("shanes/tweet-flash", {
+                "searchTerms": [clean_keyword],
+                "tweetsDesired": num_of_posts,
+            }),
+            ("web.harvester/easy-twitter-search-scraper", {
+                "query": clean_keyword,
+                "max_tweets": num_of_posts,
+            }),
+            ("dtrungtin/twitter-scraper", {
+                "searchTerms": [clean_keyword],
+                "maxTweets": num_of_posts,
+            })
+        ]
+        
+        items = []
+        for scraper_name, scraper_input in scrapers_to_try:
+            try:
+                print(f"Trying Twitter scraper: {scraper_name}")
+                print(f"Input for {scraper_name}: {scraper_input}")
+                run = client.actor(scraper_name).call(run_input=scraper_input)
+                
+                if run and "defaultDatasetId" in run:
+                    items = list(client.dataset(run["defaultDatasetId"]).iterate_items())
+                    
+                    if items:
+                        print(f"SUCCESS: Retrieved {len(items)} items from {scraper_name}")
+                        break
+                    else:
+                        print(f"No items from {scraper_name}, trying next...")
+                else:
+                    print(f"No run result from {scraper_name}")
+            except Exception as scraper_error:
+                print(f"ERROR with {scraper_name}: {scraper_error}")
+                continue
 
-    params = {
-        "dataset_id": "gd_lwxkxvnf1cynvib9co",   # Twitter Posts dataset
-        "include_errors": "true",
-        "type": "discover_new",
-        "discover_by": "keyword",
-    }
+        print(f"Retrieved {len(items)} items from Twitter")
+        
+        # Debug: Print first item to see structure
+        if items:
+            print(f"DEBUG: First Twitter item type: {type(items[0])}")
+            print(f"DEBUG: First Twitter item content (first 500 chars): {str(items[0])[:500]}")
+        
+        # Filter out non-dict items and normalize
+        valid_items = [item for item in items if isinstance(item, dict)]
+        print(f"Valid Twitter dict items: {len(valid_items)}")
+        
+        normalized_posts = [normalize_twitter_post(item) for item in valid_items]
+        
+        # Convert to the expected format for compatibility with existing code
+        parsed_posts = []
+        for post in normalized_posts:
+            parsed_post = {
+                "id": post.get("url", "").split("/")[-1] if post.get("url") else None,  # Extract ID from URL
+                "user": post.get("user", ""),
+                "text": post.get("text", ""),
+                "date": post.get("timestamp", ""),
+                "url": post.get("url", ""),
+                "likes": post.get("likes", 0),
+                "replies": post.get("replies", 0),
+                "reposts": post.get("retweets", 0),
+                "views": post.get("views", 0),
+                "hashtags": post.get("entities", []),
+                "photos": post.get("media_urls", []),
+            }
+            parsed_posts.append(parsed_post)
 
-    data = [
-        {
-            "keyword": keyword,
-            "num_of_posts": num_of_posts,
-            "sort_by": sort_by
-        }
-    ]
-
-    raw_data = _trigger_and_download_snapshot(
-        trigger_url, params, data, operation_name="twitter keyword search"
-    )
-
-    if not raw_data:
+        return {"parsed_posts": parsed_posts, "total_found": len(parsed_posts)}
+        
+    except Exception as e:
+        print(f"ERROR: Twitter search failed: {e}")
         return None
 
-    parsed_posts = []
-    for post in raw_data:
-        parsed_posts.append({
-            "id": post.get("id"),
-            "user": post.get("user_posted"),
-            "text": post.get("description"),
-            "date": post.get("date_posted"),
-            "url": post.get("url"),
-            "likes": post.get("likes"),
-            "replies": post.get("replies"),
-            "reposts": post.get("reposts"),
-            "views": post.get("views"),
-            "hashtags": post.get("hashtags"),
-            "photos": post.get("photos"),
-        })
 
-    return {"parsed_posts": parsed_posts, "total_found": len(parsed_posts)}
+def fetch_instagram_posts(hashtag: str, limit: int = 20):
+    """Fetch Instagram posts for a hashtag and return normalized data for LLM."""
+    return instagram_post_search(hashtag, limit)
 
 
+def fetch_twitter_posts(hashtag: str, limit: int = 20):
+    """Fetch Twitter/X posts for a hashtag and return normalized data for LLM."""
+    return twitter_search_by_keyword(hashtag, limit)
+
+
+if __name__ == "__main__":
+    # Test with both original and cleaned inputs
+    test_queries = ["Salman Khan", "SalmanKhan"]
+    
+    for hashtag in test_queries:
+        print(f"\n🔎 Testing with: '{hashtag}'")
+        print(f"🔎 Fetching Instagram posts for: {hashtag}")
+        ig_data = fetch_instagram_posts(hashtag, 5)
+        if ig_data and ig_data.get("parsed_posts"):
+            for post in ig_data["parsed_posts"][:2]:  # Show first 2 posts
+                print(post, "\n")
+        else:
+            print("No Instagram data found\n")
+
+        print(f"🔎 Fetching Twitter posts for: {hashtag}")
+        tw_data = fetch_twitter_posts(hashtag, 5)
+        if tw_data and tw_data.get("parsed_posts"):
+            for post in tw_data["parsed_posts"][:2]:  # Show first 2 posts
+                print(post, "\n")
+        else:
+            print("No Twitter data found\n")
+        
+        print("=" * 50)
