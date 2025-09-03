@@ -32,12 +32,12 @@ import {
   Pie,
   Cell,
 } from 'recharts'
-import { Twitter, Instagram, Globe } from 'lucide-react'
+import { Instagram, Globe, Facebook } from 'lucide-react'
 
 const platforms = [
   {
-    name: 'Twitter (X)',
-    icon: Twitter,
+    name: 'FaceBook',
+    icon: Facebook,
     lineData: [
       { date: 'Oct 1', value: 12 },
       { date: 'Oct 2', value: 15 },
@@ -56,7 +56,7 @@ const platforms = [
       threats: 14,
       safe: 35,
       description:
-        'Twitter mentions and threats fluctuated over the past week, showing increased attention on certain days.',
+        'FaceBook mentions and threats fluctuated over the past week, showing increased attention on certain days.',
     },
   },
   {
