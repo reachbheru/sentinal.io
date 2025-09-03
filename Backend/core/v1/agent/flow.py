@@ -259,8 +259,3 @@ Facebook Post {i}:
         return None
     
 
-if __name__ == "__main__":
-    load_dotenv(".env")
-    news_verification_flow = NewsVerificationFlow()
-    user_query = "Salman Khan"
-    news_verification_flow.run_news_verification(user_query)
