@@ -7,11 +7,18 @@ class State(TypedDict):
     messages: Annotated[list, add_messages]
     user_question: str | None
     google_results: str | None
-    instagram_post_data: str | None
-    selected_instagram_post_urls: list[str] | None
+    instagram_data: str | None
+    twitter_data: str | None
     google_analysis: str | None
+    instagram_analysis: str | None
+    twitter_analysis: str | None
+    social_media_analysis: str | None
     final_answer: str | None
 
 class InstagramURLAnalysis(BaseModel):
     selected_urls: List[str] = Field(description="List of Instagram URLs that contain valuable information for answering the user's question")
     instagram_post_data: List[Dict[str, Any]] = Field(description="List of Instagram post data corresponding to the selected URLs")
+
+class TwitterURLAnalysis(BaseModel):
+    selected_urls: List[str] = Field(description="List of Twitter URLs that contain valuable information for answering the user's question")
+    twitter_post_data: List[Dict[str, Any]] = Field(description="List of Twitter post data corresponding to the selected URLs")

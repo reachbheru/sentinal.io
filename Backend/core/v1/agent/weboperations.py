@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 import requests
 from urllib.parse import quote_plus
-from snapshot import poll_snapshot_status, download_snapshot
+from .snapshot import poll_snapshot_status, download_snapshot
 
 def _make_api_request(url, **kwargs):
     api_key = os.getenv("BRIGHTDATA_API_KEY")
@@ -107,4 +107,56 @@ def instagram_post_search(hashtag, num_of_posts=50):
         parsed_data.append(parsed_post)
 
     return {"parsed_posts": parsed_data, "total_found": len(parsed_data)}
+
+def twitter_search_by_keyword(keyword, num_of_posts=50, sort_by="latest"):
+    """
+    Search Twitter posts mentioning a keyword using Bright Data Datasets API.
+    
+    Args:
+        keyword (str): The keyword or phrase to search for (e.g. VIP name).
+        num_of_posts (int): Number of posts to fetch.
+        sort_by (str): Sorting criteria, e.g. "latest", "popular" (depends on dataset support).
+    """
+    trigger_url = "https://api.brightdata.com/datasets/v3/trigger"
+
+    params = {
+        "dataset_id": "gd_lwxkxvnf1cynvib9co",   # Twitter Posts dataset
+        "include_errors": "true",
+        "type": "discover_new",
+        "discover_by": "keyword",
+    }
+
+    data = [
+        {
+            "keyword": keyword,
+            "num_of_posts": num_of_posts,
+            "sort_by": sort_by
+        }
+    ]
+
+    raw_data = _trigger_and_download_snapshot(
+        trigger_url, params, data, operation_name="twitter keyword search"
+    )
+
+    if not raw_data:
+        return None
+
+    parsed_posts = []
+    for post in raw_data:
+        parsed_posts.append({
+            "id": post.get("id"),
+            "user": post.get("user_posted"),
+            "text": post.get("description"),
+            "date": post.get("date_posted"),
+            "url": post.get("url"),
+            "likes": post.get("likes"),
+            "replies": post.get("replies"),
+            "reposts": post.get("reposts"),
+            "views": post.get("views"),
+            "hashtags": post.get("hashtags"),
+            "photos": post.get("photos"),
+        })
+
+    return {"parsed_posts": parsed_posts, "total_found": len(parsed_posts)}
+
 
