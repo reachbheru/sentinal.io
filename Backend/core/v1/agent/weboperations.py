@@ -187,58 +187,48 @@ def normalize_instagram_post(post: dict) -> dict:
         }
 
 
-def normalize_twitter_post(post: dict) -> dict:
-    """Convert Apify Twitter/X post into structured JSON for LLM."""
+def normalize_facebook_post(post: dict) -> dict:
+    """Convert Apify Facebook post into structured JSON for LLM."""
     try:
-        # Safe entity processing
-        hashtags = []
-        entities = post.get("entities", {})
-        if isinstance(entities, dict) and "hashtags" in entities:
-            hashtags = [h.get("text", "") for h in entities["hashtags"] if isinstance(h, dict)]
-        
         # Safe media processing
         media_urls = []
-        extended_entities = post.get("extended_entities", {})
-        if isinstance(extended_entities, dict) and "media" in extended_entities:
-            media_urls = [m.get("media_url_https", "") for m in extended_entities["media"] if isinstance(m, dict)]
+        images = post.get("images", [])
+        if isinstance(images, list):
+            media_urls = [img.get("url", "") for img in images if isinstance(img, dict) and img.get("url")]
         
-        # Safe user processing
-        user = post.get("user", {})
-        if not isinstance(user, dict):
-            user = {}
+        # Safe video processing
+        videos = post.get("videos", [])
+        if isinstance(videos, list):
+            media_urls.extend([vid.get("url", "") for vid in videos if isinstance(vid, dict) and vid.get("url")])
         
         return {
-            "platform": "Twitter",
-            "text": post.get("full_text", "") or post.get("text", ""),
+            "platform": "Facebook",
+            "text": post.get("text", "") or post.get("content", ""),
             "url": post.get("url", ""),
-            "timestamp": post.get("created_at", ""),
-            "user": user.get("screen_name", ""),
-            "verified": user.get("verified", False),
-            "followers": user.get("followers_count", 0),
-            "likes": post.get("favorite_count", 0),
-            "replies": post.get("reply_count", 0),
-            "retweets": post.get("retweet_count", 0),
-            "views": post.get("view_count", 0),
-            "entities": hashtags,
+            "timestamp": post.get("time", "") or post.get("timestamp", ""),
+            "user": post.get("author", "") or post.get("user", ""),
+            "verified": post.get("verified", False),
+            "likes": post.get("likes", 0) or post.get("reactionsCount", 0),
+            "comments": post.get("comments", 0) or post.get("commentsCount", 0),
+            "shares": post.get("shares", 0) or post.get("sharesCount", 0),
+            "entities": [],  # Facebook hashtags are usually embedded in text
             "media_urls": media_urls,
             "media_verification_status": "unknown",
             "pre_flags": []
         }
     except Exception as e:
-        print(f"Error normalizing Twitter post: {e}")
+        print(f"Error normalizing Facebook post: {e}")
         print(f"Post data: {post}")
         return {
-            "platform": "Twitter",
+            "platform": "Facebook",
             "text": "",
             "url": "",
             "timestamp": "",
             "user": "",
             "verified": False,
-            "followers": 0,
             "likes": 0,
-            "replies": 0,
-            "retweets": 0,
-            "views": 0,
+            "comments": 0,
+            "shares": 0,
             "entities": [],
             "media_urls": [],
             "media_verification_status": "unknown",
@@ -318,9 +308,51 @@ def instagram_post_search(hashtag, num_of_posts=50):
         print(f"ERROR: Instagram search failed: {e}")
         return None
 
-def twitter_search_by_keyword(keyword, num_of_posts=50, sort_by="latest"):
+def facebook_posts_by_keyword(keyword: str, limit: int = 10):
     """
-    Search Twitter posts mentioning a keyword using Apify.
+    Fetch Facebook posts by keyword using Apify scrapers.
+    """
+    print(f"Fetching Facebook posts for keyword: {keyword}")
+    
+    # Clean keyword
+    clean_keyword = clean_keyword_for_search(keyword)
+    
+    # Try different Facebook scrapers in order of preference
+    scrapers = [
+        ("apify/facebook-posts-scraper", {
+            "searchKeywords": [clean_keyword],
+            "maxPosts": limit,
+        }),
+        ("dtrungtin/facebook-posts-scraper", {
+            "keywords": [clean_keyword],
+            "limit": limit,
+        })
+    ]
+    
+    for scraper_name, run_input in scrapers:
+        try:
+            print(f"Trying scraper: {scraper_name}")
+            run = client.actor(scraper_name).call(run_input=run_input)
+            
+            if run and "defaultDatasetId" in run:
+                dataset_items = list(client.dataset(run["defaultDatasetId"]).iterate_items())
+                if dataset_items:
+                    print(f"Retrieved {len(dataset_items)} items from Facebook using {scraper_name}")
+                    return dataset_items
+                else:
+                    print(f"No data from {scraper_name}")
+            else:
+                print(f"No response from {scraper_name}")
+        except Exception as e:
+            print(f"Error with {scraper_name}: {e}")
+            continue
+    
+    print("No Facebook data could be retrieved")
+    return []
+
+def facebook_search_by_keyword(keyword, num_of_posts=50, sort_by="latest"):
+    """
+    Search Facebook posts mentioning a keyword using Apify.
     
     Args:
         keyword (str): The keyword or phrase to search for (e.g. VIP name).
@@ -328,7 +360,7 @@ def twitter_search_by_keyword(keyword, num_of_posts=50, sort_by="latest"):
         sort_by (str): Sorting criteria, e.g. "latest", "popular" (depends on dataset support).
     """
     print("=" * 80)
-    print(f"DEBUG: Twitter Search Starting (Apify)")
+    print(f"DEBUG: Facebook Keyword Search Starting (Apify)")
     print("=" * 80)
     print(f"Original Keyword: {keyword}")
     
@@ -340,25 +372,28 @@ def twitter_search_by_keyword(keyword, num_of_posts=50, sort_by="latest"):
     print(f"Sort by: {sort_by}")
     
     try:
+        # List of Facebook scrapers to try
         scrapers_to_try = [
-            ("shanes/tweet-flash", {
-                "searchTerms": [clean_keyword],
-                "tweetsDesired": num_of_posts,
+            ("apify/facebook-posts-scraper", {
+                "searchKeywords": [clean_keyword],
+                "maxPosts": num_of_posts,
             }),
-            ("web.harvester/easy-twitter-search-scraper", {
-                "query": clean_keyword,
-                "max_tweets": num_of_posts,
+            ("dtrungtin/facebook-posts-scraper", {
+                "keywords": [clean_keyword],
+                "limit": num_of_posts,
             }),
-            ("dtrungtin/twitter-scraper", {
-                "searchTerms": [clean_keyword],
-                "maxTweets": num_of_posts,
-            })
+            ("apify/facebook-pages-scraper", {
+                "searchKeywords": [clean_keyword],
+                "maxPosts": num_of_posts,
+            }),
         ]
         
         items = []
+        successful_scraper = None
+        
         for scraper_name, scraper_input in scrapers_to_try:
             try:
-                print(f"Trying Twitter scraper: {scraper_name}")
+                print(f"Trying Facebook scraper: {scraper_name}")
                 print(f"Input for {scraper_name}: {scraper_input}")
                 run = client.actor(scraper_name).call(run_input=scraper_input)
                 
@@ -366,6 +401,7 @@ def twitter_search_by_keyword(keyword, num_of_posts=50, sort_by="latest"):
                     items = list(client.dataset(run["defaultDatasetId"]).iterate_items())
                     
                     if items:
+                        successful_scraper = scraper_name
                         print(f"SUCCESS: Retrieved {len(items)} items from {scraper_name}")
                         break
                     else:
@@ -376,18 +412,20 @@ def twitter_search_by_keyword(keyword, num_of_posts=50, sort_by="latest"):
                 print(f"ERROR with {scraper_name}: {scraper_error}")
                 continue
 
-        print(f"Retrieved {len(items)} items from Twitter")
+        print(f"Retrieved {len(items)} items from Facebook")
+        if successful_scraper:
+            print(f"Successful scraper: {successful_scraper}")
         
         # Debug: Print first item to see structure
         if items:
-            print(f"DEBUG: First Twitter item type: {type(items[0])}")
-            print(f"DEBUG: First Twitter item content (first 500 chars): {str(items[0])[:500]}")
+            print(f"DEBUG: First Facebook item type: {type(items[0])}")
+            print(f"DEBUG: First Facebook item content (first 500 chars): {str(items[0])[:500]}")
         
         # Filter out non-dict items and normalize
         valid_items = [item for item in items if isinstance(item, dict)]
-        print(f"Valid Twitter dict items: {len(valid_items)}")
+        print(f"Valid Facebook dict items: {len(valid_items)}")
         
-        normalized_posts = [normalize_twitter_post(item) for item in valid_items]
+        normalized_posts = [normalize_facebook_post(item) for item in valid_items]
         
         # Convert to the expected format for compatibility with existing code
         parsed_posts = []
@@ -399,10 +437,8 @@ def twitter_search_by_keyword(keyword, num_of_posts=50, sort_by="latest"):
                 "date": post.get("timestamp", ""),
                 "url": post.get("url", ""),
                 "likes": post.get("likes", 0),
-                "replies": post.get("replies", 0),
-                "reposts": post.get("retweets", 0),
-                "views": post.get("views", 0),
-                "hashtags": post.get("entities", []),
+                "comments": post.get("comments", 0),
+                "shares": post.get("shares", 0),
                 "photos": post.get("media_urls", []),
             }
             parsed_posts.append(parsed_post)
@@ -410,7 +446,7 @@ def twitter_search_by_keyword(keyword, num_of_posts=50, sort_by="latest"):
         return {"parsed_posts": parsed_posts, "total_found": len(parsed_posts)}
         
     except Exception as e:
-        print(f"ERROR: Twitter search failed: {e}")
+        print(f"ERROR: Facebook search failed: {e}")
         return None
 
 
@@ -419,31 +455,31 @@ def fetch_instagram_posts(hashtag: str, limit: int = 20):
     return instagram_post_search(hashtag, limit)
 
 
-def fetch_twitter_posts(hashtag: str, limit: int = 20):
-    """Fetch Twitter/X posts for a hashtag and return normalized data for LLM."""
-    return twitter_search_by_keyword(hashtag, limit)
+def fetch_facebook_posts(keyword: str, limit: int = 20):
+    """Fetch Facebook posts for a keyword and return normalized data for LLM."""
+    return facebook_search_by_keyword(keyword, limit)
 
 
 if __name__ == "__main__":
     # Test with both original and cleaned inputs
     test_queries = ["Salman Khan", "SalmanKhan"]
     
-    for hashtag in test_queries:
-        print(f"\n🔎 Testing with: '{hashtag}'")
-        print(f"🔎 Fetching Instagram posts for: {hashtag}")
-        ig_data = fetch_instagram_posts(hashtag, 5)
+    for keyword in test_queries:
+        print(f"\n🔎 Testing with: '{keyword}'")
+        print(f"🔎 Fetching Instagram posts for: {keyword}")
+        ig_data = fetch_instagram_posts(keyword, 5)
         if ig_data and ig_data.get("parsed_posts"):
             for post in ig_data["parsed_posts"][:2]:  # Show first 2 posts
                 print(post, "\n")
         else:
             print("No Instagram data found\n")
 
-        print(f"🔎 Fetching Twitter posts for: {hashtag}")
-        tw_data = fetch_twitter_posts(hashtag, 5)
-        if tw_data and tw_data.get("parsed_posts"):
-            for post in tw_data["parsed_posts"][:2]:  # Show first 2 posts
+        print(f"🔎 Fetching Facebook posts for: {keyword}")
+        fb_data = fetch_facebook_posts(keyword, 5)
+        if fb_data and fb_data.get("parsed_posts"):
+            for post in fb_data["parsed_posts"][:2]:  # Show first 2 posts
                 print(post, "\n")
         else:
-            print("No Twitter data found\n")
+            print("No Facebook data found\n")
         
         print("=" * 50)
