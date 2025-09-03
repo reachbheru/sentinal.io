@@ -1,103 +1,367 @@
-import Image from "next/image";
+
+// 'use client'
+
+// import React, { useEffect, useRef } from 'react'
+// import Link from 'next/link'
+// import gsap from 'gsap'
+// import { ScrollTrigger } from 'gsap/dist/ScrollTrigger'
+// import { BeamsBackground } from "@/components/ui/beams-background"
+
+// gsap.registerPlugin(ScrollTrigger)
+
+// export default function Home() {
+//   const sectionsRef = useRef<HTMLDivElement[]>([])
+
+//   useEffect(() => {
+//     sectionsRef.current.forEach((section, i) => {
+//       gsap.fromTo(
+//         section,
+//         { y: 60, opacity: 0, scale: 0.95 },
+//         {
+//           y: 0,
+//           opacity: 1,
+//           scale: 1,
+//           duration: 1.1,
+//           ease: 'power4.out',
+//           scrollTrigger: {
+//             trigger: section,
+//             start: 'top 85%',
+//             toggleActions: 'play none none reverse',
+//           },
+//           delay: i * 0.15,
+//         }
+//       )
+//     })
+//   }, [])
+
+//   const addToRefs = (el: HTMLDivElement | null) => {
+//     if (el && !sectionsRef.current.includes(el)) {
+//       sectionsRef.current.push(el)
+//     }
+//   }
+
+//   return (
+//     <main className="relative bg-black bg-gradient-to-b from-black via-gray-900 to-black text-gray-200 min-h-screen font-sans select-none overflow-x-hidden">
+//       {/* Hero Section */}
+//       <section
+//         className="relative flex flex-col items-center justify-center min-h-screen text-center px-6 overflow-hidden"
+//         ref={addToRefs}
+//       >
+//         <BeamsBackground className="absolute inset-0 -z-10" />
+//         <h1 className="relative text-7xl md:text-9xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 drop-shadow-lg mb-5">
+//           Sentinel<span className="text-white">.io</span>
+//         </h1>
+//         <p className="relative z-10 text-xl text-gray-400 mb-10 max-w-lg tracking-wide font-semibold">
+//           Advanced VIP Threat & Misinformation Monitoring Platform
+//         </p>
+//         <p className="relative z-10 text-sm italic text-gray-600 mb-12">
+//           Powered by <span className="text-blue-400 font-bold">RejectedDevs</span>
+//         </p>
+//         <Link
+//           href="/app"
+//           className="relative z-10 inline-block px-10 py-4 text-lg font-semibold rounded-xl bg-blue-600 hover:bg-cyan-500 active:scale-95 transition-transform shadow-lg shadow-blue-600/60 before:block before:absolute before:-inset-1 before:rounded-xl before:bg-gradient-to-r before:from-cyan-400 before:to-blue-600 before:blur-sm before:opacity-70 before:animate-tilt"
+//         >
+//           Launch Demo
+//         </Link>
+//       </section>
+
+//       {/* Features Section */}
+//       <section className="max-w-6xl mx-auto px-6 space-y-24 py-20">
+//         <FeatureSection
+//           title="Real-time Multi-Platform Monitoring"
+//           text="Track VIP mentions instantly across Twitter, Instagram, Google, and more, consolidating data into a single dashboard."
+//           iconPath="/icons/multi-platform.svg"
+//           bg="bg-gray-900/70"
+//           ref={addToRefs}
+//         />
+//         <FeatureSection
+//           title="AI-driven Misinformation & Impersonation Detection"
+//           text="Leveraging advanced AI for deep analysis of text, image, and behavior patterns to detect fake profiles and coordinated misinformation."
+//           iconPath="/icons/ai.svg"
+//           bg="bg-gray-900/60"
+//           ref={addToRefs}
+//         />
+//         <FeatureSection
+//           title="Visual Alerts & Interactive Dashboards"
+//           text="Receive real-time alerts with clear evidence and explore data visualizations to quickly grasp critical insights."
+//           iconPath="/icons/alerts.svg"
+//           bg="bg-gray-900/70"
+//           ref={addToRefs}
+//         />
+//         <FeatureSection
+//           title="Campaign Visualization & Network Analysis"
+//           text="Interactive graph views reveal relationships between fake accounts and misinformation campaigns, enabling strategic responses."
+//           iconPath="/icons/visualize.svg"
+//           bg="bg-gray-900/60"
+//           ref={addToRefs}
+//         />
+//       </section>
+
+//       {/* Call To Action */}
+//       <section
+//         className="text-center py-24 bg-gradient-to-r from-blue-900 via-cyan-800 to-blue-900 shadow-inner rounded-tl-[5rem] rounded-tr-[5rem]"
+//         ref={addToRefs}
+//       >
+//         <h2 className="text-5xl tracking-wide font-extrabold mb-4 text-white drop-shadow-lg animate-textPop">
+//           Ready to Protect?
+//         </h2>
+//         <p className="text-gray-300 max-w-xl mx-auto mb-10 text-lg tracking-wide font-semibold">
+//           Join Sentinel.io today and safeguard VIPs from misinformation and online threats with confidence.
+//         </p>
+//         <Link
+//           href="/app"
+//           className="inline-block px-12 py-5 font-bold rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-500 hover:from-blue-500 hover:to-cyan-400 transition shadow-lg shadow-cyan-400/60 animate-glowPulse"
+//         >
+//           Explore the Demo
+//         </Link>
+//       </section>
+
+//       {/* Footer */}
+//       <footer className="text-center p-6 text-gray-500 text-sm bg-black border-t border-gray-800">
+//         © 2025 Sentinel.io by RejectedDevs. All rights reserved.
+//       </footer>
+
+//       {/* Custom Animations */}
+//       <style>{`
+//         @keyframes glowPulse {
+//           0%, 100% {
+//             text-shadow:
+//               0 0 15px #00bfff,
+//               0 0 30px #00bfff;
+//           }
+//           50% {
+//             text-shadow:
+//               0 0 10px #0077cc,
+//               0 0 20px #0077cc;
+//           }
+//         }
+//         .animate-glowPulse {
+//           animation: glowPulse 3s ease-in-out infinite;
+//         }
+//         @keyframes textPop {
+//           0% {
+//             opacity: 0;
+//             transform: scale(0.96);
+//           }
+//           60% {
+//             opacity: 1;
+//             transform: scale(1.04);
+//           }
+//           100% {
+//             transform: scale(1);
+//           }
+//         }
+//         .animate-textPop {
+//           animation: textPop 1.2s ease forwards;
+//         }
+//         @keyframes tilt {
+//           0%, 100% {
+//             transform: rotate(-3deg);
+//           }
+//           50% {
+//             transform: rotate(3deg);
+//           }
+//         }
+//         .animate-tilt {
+//           animation: tilt 6s ease-in-out infinite;
+//         }
+//       `}</style>
+//     </main>
+//   )
+// }
+
+// const FeatureSection = React.forwardRef<
+//   HTMLDivElement,
+//   { title: string; text: string; iconPath: string; bg: string }
+// >(({ title, text, iconPath, bg }, ref) => (
+//   <section
+//     className={`flex flex-col md:flex-row items-center gap-8 py-12 px-6 rounded-xl shadow-lg cursor-default hover:shadow-blue-600/50 transition-shadow duration-700 ${bg}`}
+//     ref={ref}
+//   >
+//     <div className="flex-shrink-0 w-24 h-24 md:w-32 md:h-32">
+//       <img src={iconPath} alt={title} className="w-full h-full object-contain" />
+//     </div>
+//     <div className="max-w-xl text-center md:text-left">
+//       <h3 className="text-3xl font-semibold text-blue-400 mb-4">{title}</h3>
+//       <p className="text-gray-300 text-lg leading-relaxed">{text}</p>
+//     </div>
+//   </section>
+// ))
+
+// FeatureSection.displayName = 'FeatureSection'
+
+
+
+
+
+
+
+
+
+'use client'
+
+import React, { useEffect, useRef } from 'react'
+import Link from 'next/link'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger'
+import { BeamsBackground } from '@/components/ui/beams-background'
+
+gsap.registerPlugin(ScrollTrigger)
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const sectionsRef = useRef<HTMLDivElement[]>([])
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  useEffect(() => {
+    sectionsRef.current.forEach((section, i) => {
+      gsap.fromTo(
+        section,
+        { y: 60, opacity: 0, scale: 0.95 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 1.1,
+          ease: 'power4.out',
+          scrollTrigger: {
+            trigger: section,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse',
+          },
+          delay: i * 0.15,
+        }
+      )
+    })
+  }, [])
+
+  const addToRefs = (el: HTMLDivElement | null) => {
+    if (el && !sectionsRef.current.includes(el)) {
+      sectionsRef.current.push(el)
+    }
+  }
+
+  return (
+    <main className="relative bg-black bg-gradient-to-b from-black via-gray-900 to-black text-gray-200 min-h-screen font-sans select-none overflow-x-hidden">
+      {/* Hero Section */}
+      <section
+        className="relative flex flex-col items-center justify-center min-h-screen text-center px-6 overflow-hidden"
+        ref={addToRefs}
+      >
+        {/* <BeamsBackground className="absolute inset-0 -z-10" /> */}
+        <h1 className="relative text-7xl md:text-9xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 drop-shadow-md mb-5">
+          Sentinel<span className="text-white">.io</span>
+        </h1>
+        <p className="relative z-10 text-xl text-gray-400 mb-10 max-w-lg tracking-wide font-semibold">
+          Advanced VIP Threat & Misinformation Monitoring Platform
+        </p>
+        <p className="relative z-10 text-sm italic text-gray-600 mb-12">
+          Powered by <span className="text-blue-400 font-bold">RejectedDevs</span>
+        </p>
+        <Link
+          href="/app"
+          className="relative z-10 inline-block px-10 py-4 text-lg font-semibold rounded-xl bg-blue-600 hover:bg-cyan-500 active:scale-95 transition-transform shadow-md shadow-blue-600/40"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Launch Demo
+        </Link>
+      </section>
+
+      {/* Features Section */}
+      <section className="max-w-6xl mx-auto px-6 space-y-24 py-20">
+        <FeatureSection
+          title="Real-time Multi-Platform Monitoring"
+          text="Track VIP mentions instantly across Twitter, Instagram, Google, and more, consolidating data into a single dashboard."
+          iconPath="/icons/multi-platform.svg"
+          bg="bg-gray-900/70"
+          ref={addToRefs}
+        />
+        <FeatureSection
+          title="AI-driven Misinformation & Impersonation Detection"
+          text="Leveraging advanced AI for deep analysis of text, image, and behavior patterns to detect fake profiles and coordinated misinformation."
+          iconPath="/icons/ai.svg"
+          bg="bg-gray-900/60"
+          ref={addToRefs}
+        />
+        <FeatureSection
+          title="Visual Alerts & Interactive Dashboards"
+          text="Receive real-time alerts with clear evidence and explore data visualizations to quickly grasp critical insights."
+          iconPath="/icons/alerts.svg"
+          bg="bg-gray-900/70"
+          ref={addToRefs}
+        />
+        <FeatureSection
+          title="Campaign Visualization & Network Analysis"
+          text="Interactive graph views reveal relationships between fake accounts and misinformation campaigns, enabling strategic responses."
+          iconPath="/icons/visualize.svg"
+          bg="bg-gray-900/60"
+          ref={addToRefs}
+        />
+      </section>
+
+      {/* Call To Action */}
+      <section
+        className="text-center py-24 bg-gradient-to-r from-blue-900 via-cyan-800 to-blue-900 shadow-inner rounded-tl-[5rem] rounded-tr-[5rem]"
+        ref={addToRefs}
+      >
+        <h2 className="text-5xl tracking-wide font-extrabold mb-4 text-white drop-shadow-md animate-textPop">
+          Ready to Protect?
+        </h2>
+        <p className="text-gray-300 max-w-xl mx-auto mb-10 text-lg tracking-wide font-semibold">
+          Join Sentinel.io today and safeguard VIPs from misinformation and online threats with confidence.
+        </p>
+        <Link
+          href="/app"
+          className="inline-block px-12 py-5 font-bold rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-500 hover:from-blue-500 hover:to-cyan-400 transition shadow-md shadow-cyan-400/40 animate-none"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+          Explore the Demo
+        </Link>
+      </section>
+
+      {/* Footer */}
+      <footer className="text-center p-6 text-gray-500 text-sm bg-black border-t border-gray-800">
+        © 2025 Sentinel.io by RejectedDevs. All rights reserved.
       </footer>
-    </div>
-  );
+
+      {/* Custom Animations */}
+      <style>{`
+        @keyframes textPop {
+          0% {
+            opacity: 0;
+            transform: scale(0.96);
+          }
+          60% {
+            opacity: 1;
+            transform: scale(1.04);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+        .animate-textPop {
+          animation: textPop 1.2s ease forwards;
+        }
+      `}</style>
+    </main>
+  )
 }
+
+const FeatureSection = React.forwardRef<
+  HTMLDivElement,
+  { title: string; text: string; iconPath: string; bg: string }
+>(({ title, text, iconPath, bg }, ref) => (
+  <section
+    className={`flex flex-col md:flex-row items-center gap-8 py-12 px-6 rounded-xl shadow-lg cursor-default hover:shadow-blue-600/50 transition-shadow duration-700 ${bg}`}
+    ref={ref}
+  >
+    <div className="flex-shrink-0 w-24 h-24 md:w-32 md:h-32">
+      <img src={iconPath} alt={title} className="w-full h-full object-contain" />
+    </div>
+    <div className="max-w-xl text-center md:text-left">
+      <h3 className="text-3xl font-semibold text-blue-400 mb-4">{title}</h3>
+      <p className="text-gray-300 text-lg leading-relaxed">{text}</p>
+    </div>
+  </section>
+))
+
+FeatureSection.displayName = 'FeatureSection'
+
+
+
