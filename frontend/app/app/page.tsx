@@ -142,7 +142,7 @@
 
 'use client'
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -164,7 +164,7 @@ import {
   Pie,
   Cell,
 } from "recharts"
-import { Twitter, Instagram, Globe } from "lucide-react"
+import { Twitter, Instagram, Globe, Search, Facebook } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -178,8 +178,8 @@ import { Button } from "@/components/ui/button"
 
 const summaryData = [
   {
-    platform: "Twitter (X)",
-    icon: Twitter,
+    platform: "FaceBook",
+    icon: Facebook,
     threats: 14,
     safe: 35,
   },
@@ -216,11 +216,89 @@ const chartConfig: ChartConfig = {
 
 const COLORS = ['#2563eb', '#93c5fd'] // match blue theme for pie chart slices
 
+const base_url = "http://localhost:8080/"
+
 const Page = () => {
-  const [selectedPlatform, setSelectedPlatform] = useState(null)
+  const [search, setSearch] = useState("")
+  const [query, setQuery] = useState<string | null>(null)
+  const [searchResult, setSearchResult] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!query) {
+      setSearchResult(null)
+      setError(null)
+      return
+    }
+    setLoading(true)
+    setError(null)
+    fetch(`${base_url}api/v1/${encodeURIComponent(query)}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
+      .then((data) => {
+        setSearchResult(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError("No results found or API error.")
+        setSearchResult(null)
+        setLoading(false)
+      })
+  }, [query])
+
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!search.trim()) return
+    setQuery(search.trim())
+  }
 
   return (
     <div className="px-12 py-10 space-y-14 bg-black min-h-screen text-gray-100">
+      {/* Search Box */}
+      <form onSubmit={handleSearchSubmit} className="flex justify-center mb-8">
+        <div className="relative w-full max-w-md">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search for a VIP, keyword, or topic..."
+            className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900 border border-cyan-700/40 text-cyan-200 placeholder-cyan-400 shadow-inner focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+          />
+          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-400 opacity-80" />
+        </div>
+        <Button
+          type="submit"
+          className="ml-4 px-6 py-3 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 text-lg font-bold text-white shadow-lg hover:from-blue-600 hover:to-cyan-400 transition"
+          disabled={loading || !search.trim()}
+        >
+          {loading ? "Searching..." : "Search"}
+        </Button>
+      </form>
+
+      {/* Search Result Display */}
+      {query && (
+        <div className="mb-8 text-center">
+          <div className="text-lg font-semibold text-cyan-400">
+            Showing results for: <span className="text-white">{query}</span>
+          </div>
+          {loading && (
+            <div className="mt-2 text-gray-500 animate-pulse">Loading...</div>
+          )}
+          {error && (
+            <div className="mt-2 text-red-400">{error}</div>
+          )}
+          {searchResult && (
+            <div className="mt-2 text-gray-300">
+              {/* Render your API result here. Adjust as per your API response shape */}
+              <pre className="bg-gray-900/80 rounded-lg p-4 text-left text-sm overflow-x-auto">{JSON.stringify(searchResult, null, 2)}</pre>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Summary Cards */}
       <div className="flex gap-10 flex-wrap mb-6 justify-center">
         {summaryData.map(({ platform, icon: Icon, threats, safe }) => {

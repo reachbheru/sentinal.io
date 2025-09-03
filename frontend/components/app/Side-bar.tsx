@@ -1,11 +1,12 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { BarChart3, BookOpen, Settings, ShieldCheck } from "lucide-react"; // Lucide icons
+import { BarChart3, BookOpen, GalleryThumbnailsIcon, Settings, ShieldCheck, VideoIcon } from "lucide-react"; // Lucide icons
 
 const menu = [
   { name: "Statistics", icon: BarChart3, href: "/app/stats" },
-  { name: "Resources", icon: BookOpen, href: "/app/resources" },
+  {name: 'Deepfake Analyzer', icon: VideoIcon, href: '/app/deepfake' },
+  {name: 'Image Analyzer', icon: GalleryThumbnailsIcon, href: '/app/image-analysis'},
   { name: "Settings", icon: Settings, href: "/app/settings" },
 ];
 
