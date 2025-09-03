@@ -139,6 +139,37 @@ Social Media Analysis (Instagram + Twitter): {social_media_analysis}
 
 Please synthesize these analyses to provide a comprehensive fact-check report. Determine if the news/data is authentic, misleading, or fake, and provide your reasoning."""
 
+@staticmethod
+def structured_output_instruction() -> str:
+    """
+    System prompt for requesting structured output from the LLM,
+    following the AnalysisOutput schema.
+    """
+    return """
+You must always structure your output as a Python dictionary matching this exact schema:
+{
+    "summary": "A brief summary of the main findings or result",
+    "resources": [ "List of all resource identifiers or URLs used in analysis" ],
+    "statistics": [
+        {
+            "platform_name": "Name of the platform (e.g., 'Twitter', 'Instagram', 'Google')",
+            "stats": { "key1": value1, "key2": value2 }
+        }
+    ],
+    "fake_resources": [ "List any resources identified as fake or suspicious" ],
+    "additional_info": { "Any other relevant analysis details as needed" }
+}
+
+Guidelines:
+- Make your summary clear, concise, and directly related to the analysis task.
+- Populate 'resources' with every relevant source or reference used.
+- For 'statistics', provide meaningful platform-specific metrics and observations.
+- List obvious fake resources and explain why they are flagged.
+- Use 'additional_info' for any non-standard results, notes, or clarifications.
+- Only keys included above should be present in your output!
+
+Your output must always be valid according to this structure for automatic parsing and evaluation.
+"""
 
 def create_message_pair(system_prompt: str, user_prompt: str) -> list[Dict[str, Any]]:
     """
@@ -165,6 +196,7 @@ def get_instagram_analysis_messages(
     return create_message_pair(
         PromptTemplates.instagram_analysis_system(),
         PromptTemplates.instagram_analysis_user(user_query, instagram_data),
+        PromptTemplates.structured_output_instruction()
     )
 
 
@@ -175,6 +207,7 @@ def get_twitter_analysis_messages(
     return create_message_pair(
         PromptTemplates.twitter_analysis_system(),
         PromptTemplates.twitter_analysis_user(user_query, twitter_data),
+        PromptTemplates.structured_output_instruction()
     )
 
 
@@ -185,6 +218,7 @@ def get_google_analysis_messages(
     return create_message_pair(
         PromptTemplates.google_analysis_system(),
         PromptTemplates.google_analysis_user(user_query, google_results),
+        PromptTemplates.structured_output_instruction()
     )
 
 
@@ -197,6 +231,7 @@ def get_social_media_synthesis_messages(
         PromptTemplates.social_media_synthesis_user(
             user_query, instagram_analysis, twitter_analysis
         ),
+        PromptTemplates.structured_output_instruction()
     )
 
 
@@ -209,4 +244,5 @@ def get_synthesis_messages(
         PromptTemplates.synthesis_user(
             user_query, google_analysis, social_media_analysis
         ),
+        PromptTemplates.structured_output_instruction()
     )
