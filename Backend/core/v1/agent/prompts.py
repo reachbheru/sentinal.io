@@ -29,29 +29,29 @@ Instagram Data (Posts & Comments): {instagram_data}
 Please analyze this Instagram content for fact-checking. Identify any claims, evidence, or patterns that support or contradict the news/data being verified."""
 
     @staticmethod
-    def twitter_analysis_system() -> str:
-        """System prompt for analyzing Twitter content."""
-        return """You are an expert fact-checker and social media analyst. Your task is to analyze Twitter posts and comments to extract information relevant to news verification and fact-checking.
+    def facebook_analysis_system() -> str:
+        """System prompt for analyzing Facebook content."""
+        return """You are an expert fact-checker and social media analyst. Your task is to analyze Facebook posts and comments to extract information relevant to news verification and fact-checking.
 
 Focus on analyzing:
-- Tweet content and threads for factual claims
-- Retweet patterns and viral spread
+- Facebook post content and comments for factual claims
+- Share patterns and viral spread
 - User verification status and credibility
-- Reply sentiment and fact-checking responses
-- Hashtag trends and coordinated behavior
+- Comment sentiment and fact-checking responses
+- Group activity and coordinated behavior
 - Bot detection indicators
 - Timeline correlation with news events
 
 Look for signs of misinformation, coordinated inauthentic behavior, or manipulation. Identify both supporting and contradicting evidence."""
 
     @staticmethod
-    def twitter_analysis_user(user_query: str, twitter_data: str) -> str:
-        """User prompt for analyzing Twitter content."""
+    def facebook_analysis_user(user_query: str, facebook_data: str) -> str:
+        """User prompt for analyzing Facebook content."""
         return f"""News/Data to Verify: {user_query}
 
-Twitter Data (Posts & Comments): {twitter_data}
+Facebook Data (Posts & Comments): {facebook_data}
 
-Please analyze this Twitter content for fact-checking. Identify any claims, evidence, or patterns that support or contradict the news/data being verified."""
+Please analyze this Facebook content for fact-checking. Identify any claims, evidence, or patterns that support or contradict the news/data being verified."""
 
     @staticmethod
     def google_analysis_system() -> str:
@@ -81,7 +81,7 @@ Please analyze these Google results to verify the authenticity of the news/data.
     @staticmethod
     def social_media_synthesis_system() -> str:
         """System prompt for analyzing combined social media data."""
-        return """You are an expert fact-checker specializing in social media analysis. Analyze the combined Instagram and Twitter data to extract insights for news verification and fake news detection.
+        return """You are an expert fact-checker specializing in social media analysis. Analyze the combined Instagram and Facebook data to extract insights for news verification and fake news detection.
 
 Focus on:
 - Cross-platform consistency of claims and narratives
@@ -96,14 +96,14 @@ Provide insights on the credibility and authenticity of the information based on
 
     @staticmethod
     def social_media_synthesis_user(
-        user_query: str, instagram_analysis: str, twitter_analysis: str
+        user_query: str, instagram_analysis: str, facebook_analysis: str
     ) -> str:
         """User prompt for analyzing combined social media data."""
         return f"""News/Data to Verify: {user_query}
 
 Instagram Analysis: {instagram_analysis}
 
-Twitter Analysis: {twitter_analysis}
+Facebook Analysis: {facebook_analysis}
 
 Please synthesize these social media analyses to provide insights on the credibility and authenticity of the news/data."""
 
@@ -113,7 +113,7 @@ Please synthesize these social media analyses to provide insights on the credibi
         return """You are an expert fact-checker and misinformation detection specialist. Synthesize all the provided analyses to determine the authenticity and credibility of the news or data being verified.
 
 Your task:
-- Combine insights from Google search and social media analyses (Instagram and Twitter)
+- Combine insights from Google search and social media analyses (Instagram and Facebook)
 - Identify consistent patterns and contradictions across sources
 - Evaluate source credibility and reliability
 - Detect signs of misinformation, manipulation, or fake news
@@ -135,7 +135,7 @@ Create a comprehensive fact-check report with a final verdict on whether the new
 
 Google Search Analysis: {google_analysis}
 
-Social Media Analysis (Instagram + Twitter): {social_media_analysis}
+Social Media Analysis (Instagram + Facebook): {social_media_analysis}
 
 Please synthesize these analyses to provide a comprehensive fact-check report. Determine if the news/data is authentic, misleading, or fake, and provide your reasoning."""
 
@@ -152,7 +152,7 @@ Please synthesize these analyses to provide a comprehensive fact-check report. D
         "resources": [ "List of all resource identifiers or URLs used in analysis" ],
         "statistics": [
             {
-                "platform_name": "Name of the platform (e.g., 'Twitter', 'Instagram', 'Google')",
+                "platform_name": "Name of the platform (e.g., 'Facebook', 'Instagram', 'Google')",
                 "stats": { "key1": value1, "key2": value2 }
             }
         ],
@@ -200,13 +200,13 @@ def get_instagram_analysis_messages(
     )
 
 
-def get_twitter_analysis_messages(
-    user_query: str, twitter_data: str
+def get_facebook_analysis_messages(
+    user_query: str, facebook_data: str
 ) -> list[Dict[str, Any]]:
-    """Get messages for Twitter content analysis."""
+    """Get messages for Facebook content analysis."""
     return create_message_pair(
-        PromptTemplates.twitter_analysis_system(),
-        PromptTemplates.twitter_analysis_user(user_query, twitter_data),
+        PromptTemplates.facebook_analysis_system(),
+        PromptTemplates.facebook_analysis_user(user_query, facebook_data),
         PromptTemplates.structured_output_instruction()
     )
 
@@ -223,13 +223,13 @@ def get_google_analysis_messages(
 
 
 def get_social_media_synthesis_messages(
-    user_query: str, instagram_analysis: str, twitter_analysis: str
+    user_query: str, instagram_analysis: str, facebook_analysis: str
 ) -> list[Dict[str, Any]]:
     """Get messages for social media synthesis analysis."""
     return create_message_pair(
         PromptTemplates.social_media_synthesis_system(),
         PromptTemplates.social_media_synthesis_user(
-            user_query, instagram_analysis, twitter_analysis
+            user_query, instagram_analysis, facebook_analysis
         ),
         PromptTemplates.structured_output_instruction()
     )

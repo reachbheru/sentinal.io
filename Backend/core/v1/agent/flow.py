@@ -5,12 +5,12 @@ from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
-from Backend.core.v1.agent.schema.state import State, InstagramURLAnalysis, TwitterURLAnalysis    
+from Backend.core.v1.agent.schema.state import State, InstagramURLAnalysis, FacebookURLAnalysis    
 from Backend.api.v1.dependencies.service_deps import get_gemini
-from Backend.core.v1.agent.weboperations import serp_search, instagram_post_search, twitter_search_by_keyword
+from Backend.core.v1.agent.weboperations import serp_search, instagram_post_search, facebook_search_by_keyword
 from Backend.core.v1.agent.prompts import (
     get_instagram_analysis_messages,
-    get_twitter_analysis_messages,
+    get_facebook_analysis_messages,
     get_google_analysis_messages,
     get_social_media_synthesis_messages,
     get_synthesis_messages
@@ -51,23 +51,23 @@ class NewsVerificationFlow:
         
         return {"instagram_data": formatted_data}
 
-    def twitter_search(self, state: State):
-        """Search Twitter for posts and comments related to the query."""
+    def facebook_search(self, state: State):
+        """Search Facebook for posts and comments related to the query."""
         user_question = state.get("user_question", "") or ""
-        print(f"Searching Twitter for: {user_question}")
+        print(f"Searching Facebook for: {user_question}")
         
-        # Use the actual Twitter search functionality
-        twitter_data = twitter_search_by_keyword(user_question)
+        # Use the actual Facebook search functionality
+        facebook_data = facebook_search_by_keyword(user_question)
         
-        if twitter_data:
-            print(f"Found {twitter_data.get('total_found', 0)} Twitter posts")
+        if facebook_data:
+            print(f"Found {facebook_data.get('total_found', 0)} Facebook posts")
             # Format data for better LLM processing
-            formatted_data = self._format_twitter_data(twitter_data)
+            formatted_data = self._format_facebook_data(facebook_data)
         else:
-            print("No Twitter data found")
-            formatted_data = "No Twitter posts found for this query."
+            print("No Facebook data found")
+            formatted_data = "No Facebook posts found for this query."
         
-        return {"twitter_data": formatted_data}
+        return {"facebook_data": formatted_data}
 
     def _format_instagram_data(self, instagram_data: dict) -> str:
         """Format Instagram data for LLM processing."""
@@ -93,33 +93,31 @@ Post {i}:
         
         return f"Found {instagram_data.get('total_found', 0)} Instagram posts. Here are the top posts:\n" + "\n".join(formatted_posts)
 
-    def _format_twitter_data(self, twitter_data: dict) -> str:
-        """Format Twitter data for LLM processing."""
-        if not twitter_data or not twitter_data.get("parsed_posts"):
-            return "No Twitter posts found."
+    def _format_facebook_data(self, facebook_data: dict) -> str:
+        """Format Facebook data for LLM processing."""
+        if not facebook_data or not facebook_data.get("parsed_posts"):
+            return "No Facebook posts found."
         
         formatted_posts = []
-        for i, post in enumerate(twitter_data.get("parsed_posts", [])[:10], 1):  # Limit to 10 posts
+        for i, post in enumerate(facebook_data.get("parsed_posts", [])[:10], 1):  # Limit to 10 posts
             # Skip None or empty posts
             if not post or not isinstance(post, dict):
                 continue
                 
             post_info = f"""
-Tweet {i}:
+Facebook Post {i}:
 - ID: {post.get('id', 'N/A')}
 - User: {post.get('user', 'N/A')}
 - Text: {post.get('text', 'No text')[:300]}...
 - Date: {post.get('date', 'N/A')}
 - Likes: {post.get('likes', 0)}
-- Replies: {post.get('replies', 0)}
-- Reposts: {post.get('reposts', 0)}
-- Views: {post.get('views', 0)}
-- Hashtags: {post.get('hashtags', [])}
+- Comments: {post.get('comments', 0)}
+- Shares: {post.get('shares', 0)}
 - URL: {post.get('url', 'N/A')}
 """
             formatted_posts.append(post_info)
         
-        return f"Found {twitter_data.get('total_found', 0)} Twitter posts. Here are the top posts:\n" + "\n".join(formatted_posts)
+        return f"Found {facebook_data.get('total_found', 0)} Facebook posts. Here are the top posts:\n" + "\n".join(formatted_posts)
 
     def analyze_google_results(self, state: State):
         """Analyze Google search results for news verification."""
@@ -145,28 +143,28 @@ Tweet {i}:
         
         return {"instagram_analysis": reply.content}
 
-    def analyze_twitter_results(self, state: State):
-        """Analyze Twitter posts and comments for fact-checking."""
-        print("Analyzing Twitter search results")
+    def analyze_facebook_results(self, state: State):
+        """Analyze Facebook posts and comments for fact-checking."""
+        print("Analyzing Facebook search results")
         
         user_question = state.get("user_question", "") or ""
-        twitter_data = state.get("twitter_data", "") or ""
+        facebook_data = state.get("facebook_data", "") or ""
         
-        messages = get_twitter_analysis_messages(user_question, twitter_data)
+        messages = get_facebook_analysis_messages(user_question, facebook_data)
         reply = self.llm.invoke(messages)
         
-        return {"twitter_analysis": reply.content}
+        return {"facebook_analysis": reply.content}
 
     def synthesize_social_media(self, state: State):
-        """Synthesize Instagram and Twitter analyses."""
+        """Synthesize Instagram and Facebook analyses."""
         print("Synthesizing social media analyses")
         
         user_question = state.get("user_question", "") or ""
         instagram_analysis = state.get("instagram_analysis", "") or ""
-        twitter_analysis = state.get("twitter_analysis", "") or ""
+        facebook_analysis = state.get("facebook_analysis", "") or ""
         
         messages = get_social_media_synthesis_messages(
-            user_question, instagram_analysis, twitter_analysis
+            user_question, instagram_analysis, facebook_analysis
         )
         reply = self.llm.invoke(messages)
         
@@ -197,26 +195,26 @@ Tweet {i}:
         # Add nodes
         self.state_graph.add_node("google_search", self.google_search)
         self.state_graph.add_node("instagram_search", self.instagram_search)
-        self.state_graph.add_node("twitter_search", self.twitter_search)
+        self.state_graph.add_node("facebook_search", self.facebook_search)
         self.state_graph.add_node("analyze_google_results", self.analyze_google_results)
         self.state_graph.add_node("analyze_instagram_results", self.analyze_instagram_results)
-        self.state_graph.add_node("analyze_twitter_results", self.analyze_twitter_results)
+        self.state_graph.add_node("analyze_facebook_results", self.analyze_facebook_results)
         self.state_graph.add_node("synthesize_social_media", self.synthesize_social_media)
         self.state_graph.add_node("synthesize_analyses", self.synthesize_analyses)
 
         # Add edges - parallel searches first
         self.state_graph.add_edge(START, "google_search")
         self.state_graph.add_edge(START, "instagram_search")
-        self.state_graph.add_edge(START, "twitter_search")
+        self.state_graph.add_edge(START, "facebook_search")
 
         # Then parallel analysis of each source
         self.state_graph.add_edge("google_search", "analyze_google_results")
         self.state_graph.add_edge("instagram_search", "analyze_instagram_results")
-        self.state_graph.add_edge("twitter_search", "analyze_twitter_results")
+        self.state_graph.add_edge("facebook_search", "analyze_facebook_results")
 
         # Synthesize social media after both analyses are complete
         self.state_graph.add_edge("analyze_instagram_results", "synthesize_social_media")
-        self.state_graph.add_edge("analyze_twitter_results", "synthesize_social_media")
+        self.state_graph.add_edge("analyze_facebook_results", "synthesize_social_media")
 
         # Final synthesis after all analyses are complete
         self.state_graph.add_edge("analyze_google_results", "synthesize_analyses")
@@ -239,16 +237,16 @@ Tweet {i}:
             "user_question": user_query,
             "google_results": None,
             "instagram_data": None,
-            "twitter_data": None,
+            "facebook_data": None,
             "google_analysis": None,
             "instagram_analysis": None,
-            "twitter_analysis": None,
+            "facebook_analysis": None,
             "social_media_analysis": None,
             "final_answer": None,
         }
 
         print("\nStarting parallel research process...")
-        print("Launching Google, Instagram, and Twitter searches...\n")
+        print("Launching Google, Instagram, and Facebook searches...\n")
         
         graph = self.compile()
         final_state = graph.invoke(state)
