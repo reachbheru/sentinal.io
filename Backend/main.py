@@ -18,9 +18,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from Backend.api import APIConfig
 from Backend.api.v1.middlewares.error_handler import ErrorHandlerMiddleware
-# from Backend.api.v1.routes import (
-
-# )
+from Backend.api.v1.routes import (
+    query_router
+)
 from Backend.core.v1.common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -72,7 +72,7 @@ async def log_request_response(request: Request, call_next):
 
 
 # === Add Routes ===
-# app.include_router(router, prefix=APIConfig.V1_PREFIX + "/endpoint", tags=["endpoint"])
+app.include_router(query_router, prefix=APIConfig.V1_PREFIX + "/query", tags=["query"])
 
 
 # ==== Root Route ====
