@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from Backend.api.v1.schemas.query.request import UserQuery
 from Backend.api.v1.dependencies.service_deps import get_news_verification_flow
+import json
 
 
 # Initialize router
@@ -11,4 +12,4 @@ async def receive_query(user_query: UserQuery):
     news_verification_flow = get_news_verification_flow()
     data = news_verification_flow.run_news_verification(user_query.query)
 
-    return data
+    return json.dumps(data)
