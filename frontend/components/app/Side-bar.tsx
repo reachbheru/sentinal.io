@@ -19,7 +19,7 @@ const SideBar = () => {
         className="w-5/6 flex items-center gap-3 px-4 py-3 mb-6 rounded-xl bg-blue-500/20 hover:bg-blue-600/30 transition backdrop-blur-md border border-blue-200/20 shadow-lg"
       >
         <Image
-          src="/logo.png"
+          src="/logo.PNG"
           width={40}
           height={40}
           alt="logo"

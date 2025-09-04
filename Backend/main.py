@@ -37,11 +37,11 @@ app = FastAPI(
 # === Add Middlewares ===
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "http://localhost:3000", "https://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=["http://localhost:3000"],  # Allow all origins
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
+    allow_credentials=True,
     max_age=600,
 )
 app.add_middleware(ErrorHandlerMiddleware)
