@@ -20,7 +20,8 @@ from Backend.api import APIConfig
 from Backend.api.v1.middlewares.error_handler import ErrorHandlerMiddleware
 from Backend.api.v1.routes import (
     query_router,
-    image_router
+    image_router,
+    video_router,
 )
 from Backend.core.v1.common.logger import get_logger
 
@@ -75,6 +76,7 @@ async def log_request_response(request: Request, call_next):
 # === Add Routes ===
 app.include_router(query_router, prefix=APIConfig.V1_PREFIX, tags=["query"])
 app.include_router(image_router, prefix=APIConfig.V1_PREFIX, tags=["image"])
+app.include_router(video_router, prefix=APIConfig.V1_PREFIX, tags=["video"])
 
 
 # ==== Root Route ====
