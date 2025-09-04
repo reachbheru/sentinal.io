@@ -236,7 +236,7 @@ const Page = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: "aamir khan"
+          query: search.trim(),
         }),
       });
       if (!response.ok) throw new Error(`API error: ${response.status}`);

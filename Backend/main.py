@@ -103,7 +103,7 @@ def dev():
 
     uvicorn.run(
         "Backend.main:app",
-        host="0.0.0.0",
+        host="localhost",
         port=int(os.getenv("PORT", "8080")),
         reload=True,
         log_level=os.getenv("LOG_LEVEL", "debug").lower(),

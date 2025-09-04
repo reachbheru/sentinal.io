@@ -11,5 +11,6 @@ router = APIRouter()
 async def receive_query(user_query: UserQuery):
     news_verification_flow = get_news_verification_flow()
     data = news_verification_flow.run_news_verification(user_query.query)
+    print("Data:", data)
 
     return json.dumps(data)
