@@ -462,7 +462,7 @@ def fetch_facebook_posts(keyword: str, limit: int = 20):
 
 if __name__ == "__main__":
     # Test with both original and cleaned inputs
-    test_queries = ["Salman Khan", "SalmanKhan"]
+    test_queries = []
     
     for keyword in test_queries:
         print(f"\n🔎 Testing with: '{keyword}'")
