@@ -25,7 +25,7 @@ class DeepfakeDetector:
 
     """
     
-    def _init_(self):
+    def __init__(self):
         self.model_name = "prithivMLmods/deepfake-detector-model-v1"
         self.confidence_threshold = 0.5
         self.max_frames = 30
@@ -343,7 +343,7 @@ class DeepfakeDetector:
         file_extension = os.path.splitext(filename.lower())[1]
         return file_extension in self.get_supported_formats()
     
-    def _del_(self):
+    def __del__(self):
         """Cleanup resources when object is destroyed"""
         try:
             if hasattr(self, 'classifier') and self.classifier:
